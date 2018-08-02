@@ -1,0 +1,189 @@
+/**
+ * Sample React Native App
+ * https://github.com/facebook/react-native
+ *
+ * @format
+ * @flow
+ */
+
+ import React, {Component} from 'react';
+ import { StyleSheet, Text, View, StatusBar, ListView} from 'react-native';
+ import { Container, Content, Header, Form, Input, Item, Button, Label, Icon, List, ListItem} from 'native-base';
+ import * as firebase from 'firebase';
+ import renderIf from './renderIf';
+
+
+
+// Initialize Firebase
+var firebaseConfig = {
+  apiKey: "AIzaSyAVswdNWbDmRe9q1TFSX-R330dEc-4BqJ0",
+  authDomain: "fomo-35a17.firebaseapp.com",
+  databaseURL: "https://fomo-35a17.firebaseio.com",
+  projectId: "fomo-35a17",
+  storageBucket: "fomo-35a17.appspot.com",
+  messagingSenderId: "120959306656"
+};
+firebase.initializeApp(firebaseConfig);
+
+var data = []
+
+// var recentPostsRef = firebase.database().ref('/opportunities');
+// recentPostsRef.once('value').then(snapshot => {
+//   // snapshot.val() is the dictionary with all your keys/values from the '/store' path
+//   this.setState({ opportunity : snapshot.val() })
+// })
+
+export default class mobilefomoapp extends React.Component {
+
+  constructor(props) {
+    super(props);
+
+    this.ds = new ListView.DataSource({ rowHasChanged: (r1, r2) => r1 !== r2 })
+
+    this.state = {
+      opportunities: [],
+    }
+
+  }
+
+  componentDidMount() {
+
+    var that = this
+
+    firebase.database().ref('/opportunities').on('child_added', function (data) {
+
+      var newOpportunity = [...that.state.listViewData]
+      newOpportunity.push(data)
+      that.setState({ listViewData: newOpportunity })
+
+    })
+
+  }
+
+  addRow(data) {
+
+    var key = firebase.database().ref('/opportunities').push().key
+    firebase.database().ref('/opportunities').child(key).set({ name: data })
+  }
+
+  async deleteRow(secId, rowId, rowMap, data) {
+
+    await firebase.database().ref('opportunities/' + data.key).set(null)
+
+    rowMap[`${secId}${rowId}`].props.closeRow();
+    var newOpportunity = [...this.state.listViewData];
+    newOpportunity.splice(rowId, 1)
+    this.setState({ listViewData: newOpportunity });
+
+  }
+
+  // showJob() {
+  //   var ref = firebase.database().ref('opportunities/');
+  //   ref.orderByChild("Type").equalTo('job').on("child_added", function(snapshot) {
+  //   });
+  // }
+
+  // renderElement(props){
+  //   if(props.val().Type === 'job'){
+  //     <ListItem>    
+  //       <Text> {props.val().Company}</Text>
+  //       <Text> {props.val().Description}</Text>
+  //       <Text> {props.val().Link}</Text>
+  //       <Text> {props.val().Location}</Text>
+  //       <Text> {props.val().Title}</Text>
+  //       <Text> {props.val().Type}</Text>
+  //     </ListItem>
+  //   } if (props.val().Type === 'event') {
+  //     <ListItem>
+  //       <Text> {props.val().Type} </Text>
+  //     </ListItem>      
+  //   } if (props.val().Type === 'program'){
+  //       <ListItem>
+  //         <Text> {props.val().Type} </Text>
+  //       </ListItem>
+  //   } else {
+  //       <ListItem>
+  //         <Text> No type </Text>
+  //       </ListItem>
+  //   }
+  // }
+
+FinallyShow(){
+    var usersRef = firebase.database().ref('/opportunities');
+
+    usersRef.on('value', (snapshot) => {
+    this.setState({
+      opportunities: snapshot.val()
+    })
+  });
+  }
+
+  
+
+  render() {
+    return (
+      <Container style={styles.container}>
+        <Header style={{ marginTop: StatusBar.currentHeight }}>
+          <Content>
+            <Item>
+              <Text> All Opportunities </Text>
+            </Item>
+          </Content>
+        </Header>    
+        <View>
+          {this.state.opportunities}
+        </View>
+      </Container>
+
+        /* <Content>
+          <List
+            enableEmptySections
+            dataSource={this.ds.cloneWithRows(this.state.listViewData)}
+            renderRow={data =>
+              // { this.renderElement(data) }
+
+              // {renderIf(data.val().Type, <ListItem><Text></Text></ListItem>)}
+
+              // {data.val().Type === true && 
+              <ListItem>
+                <Text> {data.val().Company}</Text>
+                <Text> {data.val().Description}</Text>
+                <Text> {data.val().Link}</Text>
+                <Text> {data.val().Location}</Text>
+                <Text> {data.val().Title}</Text>
+                <Text> {data.val().Type}</Text>
+              </ListItem>
+              // }
+            }
+
+            // renderLeftHiddenRow={data =>
+            //   <Button full onPress={() => this.addRow(data)} >
+            //     <Icon name="information-circle" />
+            //   </Button>
+            // }
+            
+            renderRightHiddenRow={(data, secId, rowId, rowMap) =>
+              <Button full danger onPress={() => this.deleteRow(secId, rowId, rowMap, data)}>
+                <Icon name="trash" />
+              </Button>
+
+            }
+
+            leftOpenValue={-75}
+            rightOpenValue={-75}
+
+          />
+
+        </Content>
+      </Container> */
+    );
+  }
+}
+
+const styles = StyleSheet.create({
+  container: {
+    flex: 1,
+    backgroundColor: '#fff',
+
+  },
+});
